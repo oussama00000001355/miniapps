@@ -1,1 +1,80 @@
-{}
+
+```jsx
+// App.jsx
+import React, { useEffect, useState } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react'; // مثال لمحفظة سولانا
+import { FarcasterClient } from '@farcasterxyz/sdk'; // فرضي أن فيه SDK
+
+export default function App() {
+  const wallet = useWallet();
+  const [farcasterClient, setFarcasterClient] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [newPost, setNewPost] = useState('');
+  const [notification, setNotification] = useState('');
+
+  useEffect(() => {
+    if (wallet.connected) {
+      // إنشاء عميل Farcaster بعد توصيل المحفظة
+      const client = new FarcasterClient(wallet.publicKey.toString());
+      setFarcasterClient(client);
+
+      // جلب منشورات Farcaster الأخيرة
+      client.getLatestPosts().then(setPosts);
+    }
+  }, [wallet]);
+
+  const handlePost = async () => {
+    if (!newPost.trim()) return;
+
+    try {
+      // نشر منشور جديد في Farcaster
+
+
+await farcasterClient.post(newPost);
+      setNotification('تم النشر بنجاح!');
+      // تحديث قائمة المنشورات
+      const updatedPosts = await farcasterClient.getLatestPosts();
+      setPosts(updatedPosts);
+      setNewPost('');
+    } catch (error) {
+      setNotification('خطأ في النشر: ' + error.message);
+    }
+  };
+
+  return (
+    <div>
+      <h1>تطبيق Farcaster مع التوثيق والإشعارات</h1>
+
+      {!wallet.connected ? (
+        <button onClick={() => wallet.connect()}>توصيل المحفظة</button>
+      ) : (
+        <div>
+          <p>محفظتك: {wallet.publicKey.toString()}</p>
+
+          <textarea
+            placeholder="اكتب منشورك هنا..."
+            value={newPost}
+            onChange={e => setNewPost(e.target.value)}
+          />
+
+          <button onClick={handlePost}>نشر</button>
+
+          {notification && <p>{notification}</p>}
+
+          <h2>المنشورات الأخيرة:</h2>
+          <ul>
+            {posts.map((post, index) => (
+              <li key={index}>{post.content}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+---
+	
+
+    
